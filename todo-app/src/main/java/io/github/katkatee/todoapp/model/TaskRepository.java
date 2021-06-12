@@ -2,7 +2,6 @@ package io.github.katkatee.todoapp.model;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +17,7 @@ public interface TaskRepository {
 
     Task save(Task entity);
 
-    List<Task> findByDone(@Param("state") Boolean done);
+    List<Task> findByDone(Boolean done);
 
-
+    boolean existsByDoneIsFalseAndGroup_Id(Integer id);
 }
