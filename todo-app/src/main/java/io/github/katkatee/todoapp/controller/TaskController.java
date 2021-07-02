@@ -1,7 +1,12 @@
 package io.github.katkatee.todoapp.controller;
 
+import io.github.katkatee.todoapp.logic.TaskService;
 import io.github.katkatee.todoapp.model.Task;
 import io.github.katkatee.todoapp.model.TaskRepository;
+import java.net.URI;
+import java.util.List;
+import javax.transaction.Transactional;
+import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
@@ -12,35 +17,36 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.transaction.Transactional;
-import javax.validation.Valid;
-import java.net.URI;
-import java.util.List;
-
 @RestController
+@RequestMapping("/tasks")
 class TaskController {
     private static final Logger logger = LoggerFactory.getLogger(TaskController.class);
     private final TaskRepository repository;
+    private final TaskService service;
 
-    TaskController(TaskRepository repository) {
+
+    TaskController(TaskRepository repository, TaskService service) {
         this.repository = repository;
+        this.service = service;
     }
 
-    @GetMapping(value = "/tasks", params = {"!sort", "!page", "!size"})
+    @GetMapping(params = {"!sort", "!page", "!size"})
     ResponseEntity<List<Task>> readAllTasks() {
         logger.warn("Exposing all the tasks!");
         return ResponseEntity.ok(repository.findAll());
     }
 
-    @GetMapping("/tasks")
+    @GetMapping
     ResponseEntity<List<Task>> readAllTasks(Pageable page) {
         logger.info("Custom pageable");
         return ResponseEntity.ok(repository.findAll(page).getContent());
     }
 
-    @PutMapping("/tasks/{id}")
+    @PutMapping("/{id}")
     ResponseEntity<?> updateTask(@PathVariable int id, @RequestBody @Valid Task toUpdate) {
         if (!repository.existsById(id)) {
             return ResponseEntity.notFound().build();
@@ -54,14 +60,21 @@ class TaskController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/tasks/{id}")
+    @GetMapping("/{id}")
     ResponseEntity<Task> getById(@PathVariable int id) {
         return repository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/tasks")
+    @GetMapping("/search/done")
+    ResponseEntity<List<Task>> readDoneTask(@RequestParam(defaultValue = "true") boolean state) {
+        return ResponseEntity.ok(
+            repository.findByDone(state)
+        );
+    }
+
+    @PostMapping
     ResponseEntity<Task> create(@RequestBody @Valid Task toCreate) {
         logger.info("Created new task");
         Task result = repository.save(toCreate);
@@ -69,7 +82,7 @@ class TaskController {
     }
 
     @Transactional
-    @PatchMapping("/tasks/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<?> toggleTask(@PathVariable int id) {
         if (!repository.existsById(id)) {
             return ResponseEntity.notFound().build();
@@ -79,5 +92,7 @@ class TaskController {
                 .ifPresent(task -> task.setDone(!task.isDone()));
         return ResponseEntity.noContent().build();
     }
+
+
 
 }

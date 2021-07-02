@@ -1,0 +1,23 @@
+{
+  "groups": [
+    {
+      "name": "task",
+      "type": "io.github.katkatee.todoapp.TaskConfigurationProperties",
+      "sourceType": "io.github.katkatee.todoapp.TaskConfigurationProperties"
+    },
+    {
+      "name": "task.template",
+      "type": "io.github.katkatee.todoapp.TaskConfigurationProperties$Template",
+      "sourceType": "io.github.katkatee.todoapp.TaskConfigurationProperties",
+      "sourceMethod": "getTemplate()"
+    }
+  ],
+  "properties": [
+    {
+      "name": "task.template.allow-multiple-tasks",
+      "type": "java.lang.Boolean",
+      "sourceType": "io.github.katkatee.todoapp.TaskConfigurationProperties$Template"
+    }
+  ],
+  "hints": []
+}

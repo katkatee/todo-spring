@@ -8,7 +8,9 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
+import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +19,15 @@ import java.util.Optional;
 
 @Configuration
 public class TestConfiguration {
+
+    @Bean
+    @Primary
+    @Profile("!integration")
+    DataSource e2eTestDataSource() {
+        var result = new DriverManagerDataSource("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1", "sa", "");
+        result.setDriverClassName("org.h2.Driver");
+        return result;
+    }
 
     @Bean
     @Primary
@@ -47,7 +58,16 @@ public class TestConfiguration {
 
             @Override
             public Task save(Task entity) {
-                return tasks.put(tasks.size() + 1, entity);
+                int key = tasks.size() + 1;
+                try {
+                    var field = Task.class.getDeclaredField("id");
+                    field.setAccessible(true);
+                    field.set(entity, key);
+                } catch (NoSuchFieldException | IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+                tasks.put(key, entity);
+                return tasks.get(key);
             }
 
             @Override
@@ -58,6 +78,11 @@ public class TestConfiguration {
             @Override
             public boolean existsByDoneIsFalseAndGroup_Id(Integer id) {
                 return false;
+            }
+
+            @Override
+            public List<Task> findAllByGroup_Id(Integer groupId) {
+                return List.of();
             }
         };
     }

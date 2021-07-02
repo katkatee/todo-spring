@@ -20,4 +20,6 @@ public interface TaskRepository {
     List<Task> findByDone(Boolean done);
 
     boolean existsByDoneIsFalseAndGroup_Id(Integer id);
+
+  List<Task> findAllByGroup_Id(Integer groupId);
 }

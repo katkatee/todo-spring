@@ -1,14 +1,18 @@
 package io.github.katkatee.todoapp.logic;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import io.github.katkatee.todoapp.TaskConfigurationProperties;
 import io.github.katkatee.todoapp.model.Project;
 import io.github.katkatee.todoapp.model.ProjectRepository;
-import io.github.katkatee.todoapp.model.ProjectSteps;
+import io.github.katkatee.todoapp.model.ProjectStep;
 import io.github.katkatee.todoapp.model.TaskGroup;
 import io.github.katkatee.todoapp.model.TaskGroupRepository;
 import io.github.katkatee.todoapp.model.projection.GroupReadModel;
-import org.junit.jupiter.api.Test;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -18,12 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.Test;
 
 class ProjectServiceTest {
 
@@ -33,7 +32,7 @@ class ProjectServiceTest {
         var mockGroupRepository = groupRepositoryReturning(true);
 
         TaskConfigurationProperties mockConfig = configurationReturning(false);
-        var toTest = new ProjectService(null, mockGroupRepository, mockConfig);
+        var toTest = new ProjectService(null, mockGroupRepository, mockConfig, null);
         //when
         var exception = catchThrowable(() -> toTest.createGroup(LocalDateTime.now(), 0));
         //then
@@ -48,7 +47,7 @@ class ProjectServiceTest {
         var mockGroupRepository = mock(ProjectRepository.class);
         when(mockGroupRepository.findById(anyInt())).thenReturn(Optional.empty());
         TaskConfigurationProperties mockConfig = configurationReturning(true);
-        var toTest = new ProjectService(mockGroupRepository, null, mockConfig);
+        var toTest = new ProjectService(mockGroupRepository, null, mockConfig, null);
         //when
         var exception = catchThrowable(() -> toTest.createGroup(LocalDateTime.now(), 0));
         //then
@@ -64,7 +63,7 @@ class ProjectServiceTest {
         when(mockRepository.findById(anyInt())).thenReturn(Optional.empty());
         TaskGroupRepository mockGroupRepository = groupRepositoryReturning(false);
         TaskConfigurationProperties mockConfig = configurationReturning(true);
-        var toTest = new ProjectService(mockRepository, mockGroupRepository, mockConfig);
+        var toTest = new ProjectService(mockRepository, mockGroupRepository, mockConfig, null);
         //when
         var exception = catchThrowable(() -> toTest.createGroup(LocalDateTime.now(), 0));
         //then
@@ -82,10 +81,11 @@ class ProjectServiceTest {
         var mockRepository = mock(ProjectRepository.class);
         when(mockRepository.findById(anyInt())).thenReturn(Optional.of(project));
         InMemoryGroupRepository inMemoryGroupRepo = inMemoryGroupRepository();
+        var serviceWithInMemRepo = new TaskGroupService(inMemoryGroupRepo, null);
         int countBeforeCall = inMemoryGroupRepo.count();
 
         TaskConfigurationProperties mockConfig = configurationReturning(true);
-        var toTest = new ProjectService(mockRepository, inMemoryGroupRepo, mockConfig);
+        var toTest = new ProjectService(mockRepository, inMemoryGroupRepo, mockConfig, serviceWithInMemRepo);
 
         //when
         GroupReadModel result = toTest.createGroup(today, 1);
@@ -101,9 +101,9 @@ class ProjectServiceTest {
     private Project projectWith(String projectDescription, Set<Integer> daysToDeadline) {
         var result = mock(Project.class);
         when(result.getDescription()).thenReturn(projectDescription);
-        Set<ProjectSteps> steps = daysToDeadline.stream()
+        Set<ProjectStep> steps = daysToDeadline.stream()
                 .map(days -> {
-                    var step = mock(ProjectSteps.class);
+                    var step = mock(ProjectStep.class);
                     when(step.getDescription()).thenReturn("foo");
                     when(step.getDaysToDeadline()).thenReturn(days);
                     return step;
